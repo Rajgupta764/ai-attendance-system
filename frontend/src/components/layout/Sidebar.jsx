@@ -9,6 +9,7 @@ import {
   LogOut,
   UserCircle,
   ScanFace,
+  UserX,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -20,6 +21,7 @@ const Sidebar = () => {
     { to: '/users', icon: Users, label: 'Users' },
     { to: '/register-faces', icon: ScanFace, label: 'Register Faces' },
     { to: '/attendance', icon: Calendar, label: 'Attendance' },
+    { to: '/absent-users', icon: UserX, label: 'Absent Users' },
     { to: '/reports', icon: FileText, label: 'Reports' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];

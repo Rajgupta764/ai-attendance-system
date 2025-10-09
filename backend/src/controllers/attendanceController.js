@@ -117,10 +117,21 @@ export const getAttendanceHistory = async (req, res) => {
     const absentDays = attendance.filter(a => a.status === 'Absent').length;
     const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
 
-    res.status(200).json({ success: true, count: attendance.length, data: { attendance, stats: { totalDays, presentDays, absentDays, percentage } } });
+    res.status(200).json({ 
+      success: true, 
+      count: attendance.length, 
+      data: { 
+        attendance, 
+        stats: { totalDays, presentDays, absentDays, percentage } 
+      } 
+    });
   } catch (error) {
     console.error('Error in getAttendanceHistory:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch attendance history', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch attendance history', 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
   }
 };
 
@@ -240,17 +251,50 @@ export const exportToCSV = async (req, res) => {
 
     const attendance = await Attendance.find(query).populate('userId', 'name email employeeId department').sort({ date: -1 });
 
-    const data = attendance.map(record => ({
-      Date: new Date(record.date).toLocaleDateString(),
-      'Employee ID': record.userId?.employeeId || 'N/A',
-      Name: record.userId?.name || 'N/A',
-      Email: record.userId?.email || 'N/A',
-      Department: record.userId?.department || 'N/A',
-      Status: record.status,
-      'Check In': new Date(record.checkInTime).toLocaleTimeString(),
-      Method: record.method,
-      Confidence: record.confidence ? `${record.confidence}%` : 'N/A',
-    }));
+    const data = attendance.map(record => {
+      // Helper function to format date as YYYY-MM-DD
+      const formatDate = (date) => {
+        if (!date) return 'N/A';
+        // Ensure we have a Date object
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'Invalid Date';
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // Helper function to format time as HH:MM:SS
+      const formatTime = (date) => {
+        if (!date) return 'N/A';
+        // Ensure we have a Date object
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'Invalid Time';
+        
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+      };
+
+      // Format dates for the record
+      const recordDate = record.date ? new Date(record.date) : null;
+      const checkInDate = record.checkInTime ? new Date(record.checkInTime) : null;
+
+      return {
+        'Record Date': recordDate ? formatDate(recordDate) : 'N/A',
+        'Record Time': recordDate ? formatTime(recordDate) : 'N/A',
+        'Check In Date': checkInDate ? formatDate(checkInDate) : 'N/A',
+        'Check In Time': checkInDate ? formatTime(checkInDate) : 'N/A',
+        'Employee ID': record.userId?.employeeId || 'N/A',
+        'Name': record.userId?.name || 'N/A',
+        'Email': record.userId?.email || 'N/A',
+        'Department': record.userId?.department || 'N/A',
+        'Status': record.status || 'N/A',
+        'Method': record.method || 'N/A',
+      };
+    });
 
     const parser = new Parser();
     const csv = parser.parse(data);
@@ -267,6 +311,142 @@ export const exportToCSV = async (req, res) => {
 // @desc    Get attendance statistics
 // @route   GET /api/attendance/stats
 // @access  Private/Admin
+// @desc    Get users who haven't marked attendance today
+// @route   GET /api/attendance/absent-today
+// @access  Private/Admin
+export const getAbsentUsers = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find all users who haven't marked attendance today
+    const users = await User.aggregate([
+      {
+        $lookup: {
+          from: 'attendances',
+          let: { userId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$userId', '$$userId'] },
+                    { $gte: ['$date', today] },
+                    { $lt: ['$date', new Date(today.getTime() + 24 * 60 * 60 * 1000)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'attendance'
+        }
+      },
+      {
+        $match: {
+          'attendance.0': { $exists: false } // Users with no attendance record for today
+        }
+      },
+      {
+        $project: {
+          password: 0,
+          __v: 0,
+          attendance: 0
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+  } catch (error) {
+    console.error('Error in getAbsentUsers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch absent users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// @desc    Mark multiple users as absent
+// @route   POST /api/attendance/mark-absent
+// @access  Private/Admin
+export const markUsersAsAbsent = async (req, res) => {
+  try {
+    const { userIds, date } = req.body;
+    const markDate = date ? new Date(date) : new Date();
+    markDate.setHours(0, 0, 0, 0);
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide user IDs to mark as absent' 
+      });
+    }
+
+    const results = [];
+    
+    for (const userId of userIds) {
+      try {
+        // Check if attendance already marked for the day
+        const existingAttendance = await Attendance.findOne({
+          userId,
+          date: {
+            $gte: markDate,
+            $lt: new Date(markDate.getTime() + 24 * 60 * 60 * 1000)
+          }
+        });
+
+        if (existingAttendance) {
+          existingAttendance.status = 'Absent';
+          existingAttendance.markedBy = req.user._id;
+          existingAttendance.notes = 'Marked absent by admin';
+          await existingAttendance.save();
+          results.push({ userId, status: 'updated', attendance: existingAttendance });
+        } else {
+          const user = await User.findById(userId);
+          if (!user) {
+            results.push({ userId, status: 'error', message: 'User not found' });
+            continue;
+          }
+
+          const newAttendance = await Attendance.create({
+            userId,
+            status: 'Absent',
+            markedBy: req.user._id,
+            date: markDate,
+            method: 'manual',
+            notes: 'Marked absent by admin'
+          });
+          
+          results.push({ userId, status: 'created', attendance: newAttendance });
+        }
+      } catch (error) {
+        console.error(`Error marking user ${userId} as absent:`, error);
+        results.push({ 
+          userId, 
+          status: 'error', 
+          message: error.message 
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error in markUsersAsAbsent:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark users as absent',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 export const getAttendanceStats = async (req, res) => {
   try {
     const { days = 7 } = req.query;
@@ -280,12 +460,29 @@ export const getAttendanceStats = async (req, res) => {
     const dailyStats = {};
     const departmentStats = {};
 
+    // Generate dates for the last N days to ensure all dates are included
+    const dateMap = {};
+    const today = new Date();
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+      dateMap[dateStr] = { present: 0, absent: 0, total: 0 };
+    }
+
     attendance.forEach(record => {
-      const dateKey = new Date(record.checkInTime).toLocaleDateString();
-      if (!dailyStats[dateKey]) dailyStats[dateKey] = { present: 0, absent: 0, total: 0 };
-      dailyStats[dateKey].total++;
-      if (record.status === 'Present') dailyStats[dateKey].present++;
-      else dailyStats[dateKey].absent++;
+      // Use record.date if available, otherwise use checkInTime
+      const recordDate = record.date || record.checkInTime;
+      const dateKey = new Date(recordDate).toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      if (!dateMap[dateKey]) {
+        dateMap[dateKey] = { present: 0, absent: 0, total: 0 };
+      }
+      
+      dateMap[dateKey].total++;
+      if (record.status === 'Present') {
+        dateMap[dateKey].present++;
+      } else {
+        dateMap[dateKey].absent++;
+      }
 
       const dept = record.userId?.department || 'Unknown';
       if (!departmentStats[dept]) departmentStats[dept] = { present: 0, total: 0 };
@@ -293,7 +490,21 @@ export const getAttendanceStats = async (req, res) => {
       if (record.status === 'Present') departmentStats[dept].present++;
     });
 
-    res.status(200).json({ success: true, data: { dailyStats, departmentStats } });
+    // Convert date strings to proper date objects and sort them
+    const sortedDailyStats = Object.entries(dateMap)
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+      .reduce((acc, [date, data]) => {
+        acc[date] = data;
+        return acc;
+      }, {});
+
+    res.status(200).json({ 
+      success: true, 
+      data: { 
+        dailyStats: sortedDailyStats, 
+        departmentStats 
+      } 
+    });
   } catch (error) {
     console.error('Error in getAttendanceStats:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch attendance statistics', error: process.env.NODE_ENV === 'development' ? error.message : undefined });

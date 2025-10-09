@@ -7,7 +7,9 @@ import {
   getTodayAttendance,
   exportToCSV,
   getAttendanceStats,
-  getMyTodayAttendance
+  getMyTodayAttendance,
+  getAbsentUsers,
+  markUsersAsAbsent
 } from '../controllers/attendanceController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -39,5 +41,11 @@ router.get('/export/csv', protect, authorize('admin'), exportToCSV);
 
 // Get attendance statistics
 router.get('/stats', protect, authorize('admin'), getAttendanceStats);
+
+// Get users who haven't marked attendance today
+router.get('/absent-today', protect, authorize('admin'), getAbsentUsers);
+
+// Mark multiple users as absent
+router.post('/mark-absent', protect, authorize('admin'), markUsersAsAbsent);
 
 export default router;

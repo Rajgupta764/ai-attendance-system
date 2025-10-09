@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Calendar, TrendingUp, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -18,96 +18,142 @@ const Dashboard = () => {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          toast.error('Please login again');
-          return;
-        }
-
-        // Set the token in the headers
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-        if (isAdmin) {
-          // For admin, fetch both today's attendance and stats
-          const [todayRes, statsRes] = await Promise.all([
-            api.get('/attendance/today').catch(err => {
-              console.error('Error fetching today data:', err);
-              return { data: { success: false } };
-            }),
-            api.get('/attendance/stats?days=7').catch(err => {
-              console.error('Error fetching stats:', err);
-              return { data: { success: false } };
-            })
-          ]);
-
-          console.log('Today Response:', todayRes?.data);
-          console.log('Stats Response:', statsRes?.data);
-
-          if (todayRes?.data?.success) {
-            const { totalUsers, presentToday, absentToday, percentage } = todayRes.data.data.stats;
-            setStats({
-              totalUsers,
-              presentToday,
-              absentToday,
-              percentage: parseFloat(percentage).toFixed(2)
-            });
-          }
-
-          if (statsRes?.data?.success) {
-            const dailyData = Object.entries(statsRes.data.data.dailyStats || {}).map(([date, data]) => ({
-              date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              present: data.present || 0,
-              absent: data.absent || 0,
-            }));
-            setAttendanceData(dailyData.reverse());
-          }
-        } else {
-          // For non-admin users, fetch their own stats
-          try {
-            console.log('Fetching user attendance for today...');
-            const response = await api.get('/attendance/my-today');
-            
-            console.log('User today response:', response.data);
-            
-            if (response.data.success) {
-              setStats(prev => ({
-                ...prev,
-                presentToday: response.data.data?.present ? 1 : 0,
-                absentToday: response.data.data?.absent ? 1 : 0,
-                percentage: response.data.data?.percentage || 0
-              }));
-            }
-          } catch (error) {
-            console.error('Error in fetching user today data:', {
-              message: error.message,
-              response: error.response?.data,
-              status: error.response?.status
-            });
-            
-            if (error.response?.status === 401) {
-              // Handle unauthorized (token expired/invalid)
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              window.location.href = '/login';
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Dashboard error:', error);
-        toast.error(error.response?.data?.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please login again');
+        return;
       }
+
+      // Set the token in the headers
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      if (isAdmin) {
+        // For admin, fetch both today's attendance and stats
+        const [todayRes, statsRes] = await Promise.all([
+          api.get('/attendance/today').catch(err => {
+            console.error('Error fetching today data:', err);
+            return { data: { success: false } };
+          }),
+          api.get('/attendance/stats?days=7').catch(err => {
+            console.error('Error fetching stats:', err);
+            return { data: { success: false } };
+          })
+        ]);
+
+        console.log('Today Response:', todayRes?.data);
+        console.log('Stats Response:', statsRes?.data);
+
+        if (todayRes?.data?.success) {
+          const { totalUsers, presentToday, absentToday, percentage } = todayRes.data.data.stats;
+          setStats({
+            totalUsers,
+            presentToday,
+            absentToday,
+            percentage: parseFloat(percentage).toFixed(2)
+          });
+        }
+        
+        if (statsRes?.data?.success) {
+          // Process and format the daily stats data
+          const dailyData = Object.entries(statsRes.data.data.dailyStats || {})
+            .map(([dateStr, data]) => {
+              // Parse the date string (in YYYY-MM-DD format)
+              const [year, month, day] = dateStr.split('-').map(Number);
+              const date = new Date(Date.UTC(year, month - 1, day));
+              
+              // Format the date for display
+              const formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'UTC' // Ensure consistent display across timezones
+              });
+
+              return {
+                date: formattedDate,
+                dateObj: date, // Keep the date object for sorting
+                present: data.present || 0,
+                absent: data.absent || 0,
+              };
+            })
+            // Sort by date in ascending order
+            .sort((a, b) => a.dateObj - b.dateObj)
+            // Remove the temporary dateObj
+            .map(({ dateObj, ...rest }) => rest);
+          setAttendanceData(dailyData);
+        }
+      } else {
+        // For non-admin users, fetch their own stats
+        try {
+          console.log('Fetching user attendance for today...');
+          const response = await api.get('/attendance/my-today');
+          
+          console.log('User today response:', response.data);
+          
+          if (response.data.success) {
+            setStats(prev => ({
+              ...prev,
+              presentToday: response.data.data?.present ? 1 : 0,
+              absentToday: response.data.data?.absent ? 1 : 0,
+              percentage: response.data.data?.percentage || 0
+            }));
+          }
+        } catch (error) {
+          console.error('Error in fetching user today data:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+          });
+          
+          if (error.response?.status === 401) {
+            // Handle unauthorized (token expired/invalid)
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in fetchDashboardData:', error);
+      setError(error.message);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdmin]);
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch data and setup refresh listener
+  useEffect(() => {
+    // Initial data fetch
+    fetchDashboardData();
+
+    // Add event listener for refresh
+    const handleRefresh = () => {
+      console.log('Refreshing dashboard data...');
+      fetchDashboardData();
     };
 
-    fetchData();
-  }, [isAdmin]);
+    window.addEventListener('refreshDashboard', handleRefresh);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('refreshDashboard', handleRefresh);
+    };
+  }, [fetchDashboardData]);
 
   const statCards = [
     {
@@ -179,8 +225,30 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-1">Welcome to your attendance overview</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-600 mt-1">Welcome to your attendance overview</p>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-medium text-slate-700">
+              {currentDateTime.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </div>
+            <div className="text-slate-500">
+              {currentDateTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}

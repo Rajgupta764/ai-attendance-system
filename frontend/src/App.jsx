@@ -13,6 +13,7 @@ import MyAttendance from './pages/MyAttendance';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import RegisterFaces from './pages/RegisterFaces';
+import AbsentUsers from './pages/AbsentUsers';
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="absent-users"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AbsentUsers />
                 </ProtectedRoute>
               }
             />
