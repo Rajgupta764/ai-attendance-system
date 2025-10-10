@@ -72,7 +72,7 @@ export const recognizeAndMark = async (req, res) => {
         userId,
         checkInTime: new Date(),
         status: 'Present',
-        method: 'face_recognition',
+        method: 'face-recognition',
         markedBy: req.user._id,
       });
 

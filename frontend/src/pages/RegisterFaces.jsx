@@ -37,9 +37,16 @@ const RegisterFaces = () => {
   };
 
   const fetchRegisteredFaces = async () => {
-    // Mock data for now since AI service is disabled
-    setRegisteredFaces([]);
-    console.log('AI service is disabled for now');
+    try {
+      const response = await axios.get('http://localhost:8000/api/registered-faces');
+      if (response.data.success) {
+        setRegisteredFaces(response.data.registeredUsers);
+      }
+    } catch (error) {
+      console.error('Failed to fetch registered faces:', error);
+      // Fallback to empty array if AI service is not available
+      setRegisteredFaces([]);
+    }
   };
   const openCamera = (user) => {
     setSelectedUser(user);
@@ -72,10 +79,10 @@ const RegisterFaces = () => {
 
   const captureAndRegister = async () => {
     if (!selectedUser) return;
-    
+
     setCapturing(true);
     const imageSrc = webcamRef.current?.getScreenshot();
-    
+
     if (!imageSrc) {
       toast.error('Failed to capture image');
       setCapturing(false);
@@ -83,12 +90,19 @@ const RegisterFaces = () => {
     }
 
     try {
-      // Simulate face registration since AI service is disabled
-      setRegisteredFaces(prev => [...prev, selectedUser._id]);
-      toast.success('Face registration simulation successful');
-      setCapturing(false);
-      setIsCameraOpen(false);
-      setSelectedUser(null);
+      // Call AI service to register face
+      const response = await axios.post('http://localhost:8000/api/register-face', {
+        userId: selectedUser._id,
+        image: imageSrc,
+      });
+
+      if (response.data.success) {
+        setRegisteredFaces(prev => [...prev, selectedUser._id]);
+        toast.success(`Face registered successfully for ${selectedUser.name}`);
+        setCapturing(false);
+        setIsCameraOpen(false);
+        setSelectedUser(null);
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast.error(error.response?.data?.error || 'Failed to register face');
