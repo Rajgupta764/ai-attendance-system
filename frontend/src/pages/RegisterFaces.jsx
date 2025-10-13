@@ -214,12 +214,12 @@ const RegisterFaces = () => {
             />
           </div>
 
-          <div className="flex gap-3">
-            <Button onClick={captureAndRegister} className="flex-1" loading={capturing}>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={captureAndRegister} className="flex-1 w-full sm:w-auto" loading={capturing}>
               <CheckCircle className="w-5 h-5" />
               Capture & Register
             </Button>
-            <Button variant="secondary" onClick={() => setIsCameraOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsCameraOpen(false)} className="w-full sm:w-auto">
               <X className="w-5 h-5" />
               Cancel
             </Button>

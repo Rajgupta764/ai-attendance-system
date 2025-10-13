@@ -126,72 +126,68 @@ const Attendance = () => {
           </Button>
         </div>
       </div>
-      {/* Today's Attendance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Today's Attendance ({new Date().toLocaleDateString()})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Check In</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Method</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendance.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                    No attendance records for today
-                  </TableCell>
-                </TableRow>
-              ) : (
-                attendance.map((record) => (
-                  <TableRow key={record._id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {record.userId?.imageUrl ? (
-                          <img
-                            src={record.userId.imageUrl}
-                            alt={record.userId.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                            <span className="text-primary-600 font-semibold">
-                              {record.userId?.name?.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-slate-900">{record.userId?.name}</p>
-                          <p className="text-sm text-slate-500">{record.userId?.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{record.userId?.employeeId || 'N/A'}</TableCell>
-                    <TableCell>{record.userId?.department || 'N/A'}</TableCell>
-                    <TableCell>{formatTime(record.checkInTime)}</TableCell>
-                    <TableCell>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                        {record.status}
+      {/* Today's Attendance - Mobile Responsive Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {attendance.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="p-8 text-center">
+              <CalendarIcon className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <p className="text-slate-500">No attendance records for today</p>
+            </CardContent>
+          </Card>
+        ) : (
+          attendance.map((record) => (
+            <Card key={record._id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  {record.userId?.imageUrl ? (
+                    <img
+                      src={record.userId.imageUrl}
+                      alt={record.userId.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-slate-200"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center border-2 border-slate-200">
+                      <span className="text-primary-600 font-semibold">
+                        {record.userId?.name?.charAt(0)}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-600 capitalize">{record.method}</span>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 truncate">{record.userId?.name}</h3>
+                    <p className="text-sm text-slate-500 truncate">{record.userId?.email}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Employee ID:</span>
+                    <span className="font-medium">{record.userId?.employeeId || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Department:</span>
+                    <span className="font-medium">{record.userId?.department || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Check In:</span>
+                    <span className="font-medium">{formatTime(record.checkInTime)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Status:</span>
+                    <span className={`font-medium ${getStatusColor(record.status)}`}>
+                      {record.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Method:</span>
+                    <span className="font-medium capitalize">{record.method}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Camera Modal */}
       <Modal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} title="Face Recognition">
@@ -214,16 +210,16 @@ const Attendance = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button
               onClick={captureImage}
               disabled={capturing}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Camera className="w-5 h-5" />
               {capturing ? 'Processing...' : 'Capture'}
             </Button>
-            <Button variant="secondary" onClick={() => setIsCameraOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsCameraOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
           </div>
@@ -241,11 +237,11 @@ const Attendance = () => {
             <div className="text-center">
               <p className="text-lg font-medium">Mark attendance for:</p>
               <p className="text-2xl font-bold mt-2">{selectedUser.name}</p>
-              <div className="mt-6 flex justify-center gap-4">
-                <Button onClick={() => markManualAttendance(selectedUser._id)}>
+              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                <Button onClick={() => markManualAttendance(selectedUser._id)} className="w-full sm:w-auto">
                   Mark Present
                 </Button>
-                <Button variant="secondary" onClick={() => setSelectedUser(null)}>
+                <Button variant="secondary" onClick={() => setSelectedUser(null)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>
@@ -272,14 +268,15 @@ const Attendance = () => {
                 </select>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => selectedUser?._id && markManualAttendance(selectedUser._id)}
                   disabled={!selectedUser?._id}
+                  className="w-full sm:w-auto"
                 >
                   Mark Present
                 </Button>
-                <Button variant="secondary" onClick={() => setSelectedUser(null)}>
+                <Button variant="secondary" onClick={() => setSelectedUser(null)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>

@@ -225,13 +225,13 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
             <p className="text-slate-600 mt-1">Welcome to your attendance overview</p>
           </div>
-          <div className="text-right">
-            <div className="text-lg font-medium text-slate-700">
+          <div className="text-left sm:text-right">
+            <div className="text-base sm:text-lg font-medium text-slate-700">
               {currentDateTime.toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -239,7 +239,7 @@ const Dashboard = () => {
                 day: 'numeric'
               })}
             </div>
-            <div className="text-slate-500">
+            <div className="text-sm sm:text-base text-slate-500">
               {currentDateTime.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',

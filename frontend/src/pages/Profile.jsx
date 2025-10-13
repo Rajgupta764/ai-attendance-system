@@ -87,7 +87,7 @@ const Profile = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Profile</h1>
         <p className="text-slate-600 mt-1">Manage your account settings</p>
       </div>
 
@@ -106,11 +106,11 @@ const Profile = () => {
                     <img
                       src={user.imageUrl}
                       alt={user.name}
-                      className="w-32 h-32 rounded-full object-cover border-4 border-slate-100"
+                      className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-slate-100"
                     />
                   ) : (
-                    <div className="w-32 h-32 rounded-full bg-primary-100 flex items-center justify-center border-4 border-slate-100">
-                      <User className="w-16 h-16 text-primary-600" />
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-primary-100 flex items-center justify-center border-4 border-slate-100">
+                      <User className="w-12 h-12 sm:w-16 sm:h-16 text-primary-600" />
                     </div>
                   )}
                   
@@ -137,8 +137,8 @@ const Profile = () => {
                   )}
                 </div>
                 
-                <h2 className="text-2xl font-bold text-slate-900 mb-1">{user?.name}</h2>
-                <p className="text-slate-500 mb-2">{user?.email}</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">{user?.name}</h2>
+                <p className="text-sm sm:text-base text-slate-500 mb-2">{user?.email}</p>
                 <p className="text-xs text-slate-400 mb-4">Click camera icon to change photo</p>
                 <span
                   className={`px-4 py-1 rounded-full text-sm font-medium ${
@@ -222,25 +222,25 @@ const Profile = () => {
                 Upload a clear photo of your face for better attendance recognition. Recommended: Front-facing photo with good lighting.
               </p>
               
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="relative">
                   {user?.imageUrl ? (
                     <img
                       src={user.imageUrl}
                       alt="Current"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-slate-200"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-slate-200"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200">
-                      <User className="w-10 h-10 text-slate-400" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200">
+                      <User className="w-8 h-8 sm:w-10 sm:h-10 text-slate-400" />
                     </div>
                   )}
                 </div>
                 
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <label
                     htmlFor="profile-image-input"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg cursor-pointer transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg cursor-pointer transition-colors w-full sm:w-auto"
                   >
                     <Camera className="w-5 h-5" />
                     {uploadingImage ? 'Uploading...' : 'Choose New Photo'}
@@ -253,7 +253,7 @@ const Profile = () => {
                     className="hidden"
                     disabled={uploadingImage}
                   />
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-slate-500 mt-2 text-center sm:text-left">
                     JPG, PNG or GIF. Max size 5MB.
                   </p>
                 </div>

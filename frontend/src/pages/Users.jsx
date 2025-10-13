@@ -160,14 +160,14 @@ const Users = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Users Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Users Management</h1>
           <p className="text-slate-600 mt-1">Manage system users and their roles</p>
         </div>
         <Button onClick={() => openModal()}>
           <Plus className="w-5 h-5" />
-          Add User
+          <span className="hidden sm:inline">Add User</span>
         </Button>
       </div>
 
@@ -187,88 +187,87 @@ const Users = () => {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user._id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {user.imageUrl ? (
-                        <img
-                          src={user.imageUrl}
-                          alt={user.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                          <UserCircle className="w-6 h-6 text-primary-600" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-slate-900">{user.name}</p>
-                        <p className="text-sm text-slate-500">{user.email}</p>
-                      </div>
+      {/* Users Cards - Mobile Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {filteredUsers.map((user) => (
+          <Card key={user._id} className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col items-center text-center space-y-4">
+                {/* User Avatar */}
+                <div className="relative">
+                  {user.imageUrl ? (
+                    <img
+                      src={user.imageUrl}
+                      alt={user.name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-slate-100"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-100 flex items-center justify-center border-4 border-slate-100">
+                      <UserCircle className="w-8 h-8 sm:w-10 sm:h-10 text-primary-600" />
                     </div>
-                  </TableCell>
-                  <TableCell>{user.employeeId || 'N/A'}</TableCell>
-                  <TableCell>{user.department || 'N/A'}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'admin'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openModal(user)}
-                        className="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user._id)}
-                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                  )}
+                  <span
+                    className={`absolute -bottom-1 -right-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      user.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {user.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                {/* User Info */}
+                <div className="w-full space-y-2">
+                  <h3 className="text-lg font-semibold text-slate-900">{user.name}</h3>
+                  <p className="text-sm text-slate-500">{user.email}</p>
+
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Employee ID:</span>
+                      <span className="font-medium">{user.employeeId || 'N/A'}</span>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Department:</span>
+                      <span className="font-medium">{user.department || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Role:</span>
+                      <span
+                        className={`font-medium ${
+                          user.role === 'admin'
+                            ? 'text-purple-600'
+                            : 'text-blue-600'
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 w-full">
+                  <button
+                    onClick={() => openModal(user)}
+                    className="flex-1 p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-colors"
+                    title="Edit User"
+                  >
+                    <Edit className="w-4 h-4 mx-auto" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user._id)}
+                    className="flex-1 p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                    title="Delete User"
+                  >
+                    <Trash2 className="w-4 h-4 mx-auto" />
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Add/Edit User Modal */}
       <Modal
