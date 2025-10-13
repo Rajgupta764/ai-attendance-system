@@ -32,7 +32,7 @@ router.get('/today', protect, authorize('admin'), getTodayAttendance);
 
 // Get current user's attendance for today
 router.get('/my-today', protect, (req, res, next) => {
-  console.log('User in route handler:', req.user); // Debug log
+  // Removed debug log to prevent circular reference issues
   next();
 }, getMyTodayAttendance);
 

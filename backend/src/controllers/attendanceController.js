@@ -191,8 +191,6 @@ export const getTodayAttendance = async (req, res) => {
 // @access  Private
 export const getMyTodayAttendance = async (req, res) => {
   try {
-    console.log('Request user:', req.user); // Debug log
-    
     if (!req.user || !req.user._id) {
       console.error('User not authenticated or user ID missing');
       return res.status(401).json({ 
@@ -204,14 +202,14 @@ export const getMyTodayAttendance = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    console.log('Fetching attendance for user:', req.user._id, 'on:', today);
+    console.log('Fetching attendance for user:', req.user._id);
     
     const attendance = await Attendance.findOne({ 
       userId: req.user._id, 
       date: { $gte: today } 
     }).populate('markedBy', 'name email');
 
-    console.log('Found attendance:', attendance);
+    console.log('Found attendance record for user:', req.user._id);
 
     if (!attendance) {
       return res.status(200).json({ 
