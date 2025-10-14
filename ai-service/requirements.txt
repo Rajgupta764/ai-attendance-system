@@ -5,14 +5,3 @@ face-recognition==1.3.0
 opencv-python
 numpy
 Pillow
-face-recognition==1.3.0
-face-recognition-models==0.3.0
-
-# Image processing and math
-opencv-python
-numpy
-Pillow
-
-# Optional: helps some servers build faster
-setuptools
-wheel
