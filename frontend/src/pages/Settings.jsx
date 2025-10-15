@@ -1,8 +1,37 @@
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, Bell, Shield, Database, Zap } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
+import { useState, useEffect } from 'react';
 
 const Settings = () => {
+  const [emailNotifications, setEmailNotifications] = useState(() => {
+    return localStorage.getItem('emailNotifications') === 'true';
+  });
+
+  const [smsAlerts, setSmsAlerts] = useState(() => {
+    return localStorage.getItem('smsAlerts') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('emailNotifications', emailNotifications);
+  }, [emailNotifications]);
+
+  useEffect(() => {
+    localStorage.setItem('smsAlerts', smsAlerts);
+  }, [smsAlerts]);
+
+  const handleEmailToggle = () => {
+    setEmailNotifications(!emailNotifications);
+    // Here you can call an API to save to backend
+    // Example: await fetch('/api/settings/notifications', { method: 'POST', body: { emailNotifications: !emailNotifications } });
+  };
+
+  const handleSmsToggle = () => {
+    setSmsAlerts(!smsAlerts);
+    // Here you can call an API to save to backend
+    // Example: await fetch('/api/settings/notifications', { method: 'POST', body: { smsAlerts: !smsAlerts } });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -34,7 +63,12 @@ const Settings = () => {
                     <p className="text-sm text-slate-500">Receive attendance alerts via email</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={emailNotifications}
+                      onChange={handleEmailToggle}
+                    />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                 </div>
@@ -45,7 +79,12 @@ const Settings = () => {
                     <p className="text-sm text-slate-500">Get SMS for important updates</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={smsAlerts}
+                      onChange={handleSmsToggle}
+                    />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                 </div>
@@ -114,7 +153,7 @@ const Settings = () => {
                   <p className="text-sm font-medium text-slate-900 mb-2">AI Service Status</p>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-                    <span className="text-sm text-slate-600">Not Configured</span>
+                    <span className="text-sm text-slate-600">Configured</span>
                   </div>
                 </div>
 
